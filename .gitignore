@@ -1,0 +1,7 @@
+node_modules/
+dist/
+dev-dist/
+*.tsbuildinfo
+ai_extracted/
+sound_card.zip
+.DS_Store
