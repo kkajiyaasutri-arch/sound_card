@@ -1,24 +1,22 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  base: '/sound_card/',
   plugins: [
     react(),
-    tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg'],
       manifest: {
         name: '絵カードコミュニケーション',
         short_name: '絵カード',
-        description: '声に出して伝えたいカードを選んで、音声で読み上げるアプリです。',
-        theme_color: '#f8fafc',
-        background_color: '#f8fafc',
-        display: 'standalone',
+        description: '声に出して伝えたいカードを選んで、音声で読み上げるアプリです',
         start_url: '/',
         scope: '/',
+        display: 'standalone',
+        background_color: '#f8fafc',
+        theme_color: '#f8fafc',
         icons: [{
           src: 'icon.svg',
           sizes: '192x192 512x512',
@@ -32,10 +30,6 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
-      },
-      devOptions: {
-        enabled: true,
-        type: 'module',
       },
     }),
   ],
