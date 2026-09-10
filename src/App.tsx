@@ -114,20 +114,24 @@ export default function App() {
     speakRef.current = speak;
   });
 
-  const requestMicAccess = async () => {
-    try {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach(track => track.stop());
-      }
-      localStorage.setItem('micPermissionGranted', 'true');
-      setShowMicGuide(false);
-      startListening();
-    } catch (err) {
-      console.warn('getUserMedia mic request error:', err);
-      setShowMicGuide(false);
-      startListening();
+  // Request mic permission and start listening *immediately* (no async/await) to keep the iOS user‑chain.
+  const requestMicAccess = () => {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      // Initiate permission request without awaiting; keep within same user gesture.
+      navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then((stream) => {
+          // Stop tracks – we only needed the permission.
+          stream.getTracks().forEach((track) => track.stop());
+        })
+        .catch((err) => {
+          console.warn('getUserMedia mic request error:', err);
+        });
     }
+    // Mark permission attempt and start listening immediately.
+    // Permission will be handled by SpeechRecognition start().
+    setShowMicGuide(false);
+    startListening();
   };
 
   const startListening = () => {
@@ -191,35 +195,22 @@ export default function App() {
     }
   };
 
-  const toggleListening = async (e: React.MouseEvent) => {
+  const toggleListening = (e: React.MouseEvent) => {
     e.preventDefault();
     if (isListening) {
-      recognitionRef.current?.stop();
-      setIsListening(false);
-      return;
+        recognitionRef.current?.stop();
+        setIsListening(false);
+        return;
     }
 
-    // If we already have permission saved, just start listening
-    if (localStorage.getItem('micPermissionGranted') === 'true') {
-      startListening();
-      return;
+    // Request mic permission (non‑awaited) then start listening immediately.
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ audio: true }).catch(err => {
+            console.warn('getUserMedia error:', err);
+        });
     }
-
-    // Try permission query (not supported on iOS Safari, so we catch)
-    try {
-      if (navigator.permissions && navigator.permissions.query) {
-        const permission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
-        if (permission.state === 'granted') {
-          startListening();
-          return;
-        }
-      }
-    } catch { /* ignore – iOS doesn't support this */ }
-
-    // Request mic access via getUserMedia (triggers browser permission dialog)
-    // then immediately start listening – keeps the user gesture chain intact for iOS
-    requestMicAccess();
-  };
+    startListening();
+};
 
   const handleAddCard = (e: React.FormEvent) => {
     e.preventDefault();
