@@ -137,48 +137,57 @@ export default function App() {
       return;
     }
 
-    if (!recognitionRef.current) {
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = true;
-      recognitionRef.current.interimResults = true;
-      recognitionRef.current.lang = 'ja-JP';
-
-      recognitionRef.current.onstart = () => {
-        setIsListening(true);
-        setShowMicGuide(false);
-        hasRecognizedTextRef.current = false;
-        localStorage.setItem('micPermissionGranted', 'true');
-      };
-
-      recognitionRef.current.onresult = (event: any) => {
-        let final = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) final += event.results[i][0].transcript;
-        }
-        if (final) {
-          setDirectInputText(prev => prev + final);
-          hasRecognizedTextRef.current = true;
-        }
-      };
-
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-        if (hasRecognizedTextRef.current && directInputTextRef.current) {
-          speakRef.current(directInputTextRef.current);
-        }
-        hasRecognizedTextRef.current = false;
-      };
-
-      recognitionRef.current.onerror = (event: any) => {
-        if (event.error === 'not-allowed') setShowMicGuide(false);
-        setIsListening(false);
-      };
+    // Always create a fresh instance – iOS Safari silently fails if an old one is reused
+    if (recognitionRef.current) {
+      try { recognitionRef.current.abort(); } catch (_) { /* ignore */ }
+      recognitionRef.current = null;
     }
+
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    recognitionRef.current = new SpeechRecognition();
+    recognitionRef.current.continuous = !isIOS; // iOS does not support continuous mode
+    recognitionRef.current.interimResults = true;
+    recognitionRef.current.lang = 'ja-JP';
+
+    recognitionRef.current.onstart = () => {
+      setIsListening(true);
+      setShowMicGuide(false);
+      hasRecognizedTextRef.current = false;
+      localStorage.setItem('micPermissionGranted', 'true');
+    };
+
+    recognitionRef.current.onresult = (event: any) => {
+      let final = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) final += event.results[i][0].transcript;
+      }
+      if (final) {
+        setDirectInputText(prev => prev + final);
+        hasRecognizedTextRef.current = true;
+      }
+    };
+
+    recognitionRef.current.onend = () => {
+      setIsListening(false);
+      if (hasRecognizedTextRef.current && directInputTextRef.current) {
+        speakRef.current(directInputTextRef.current);
+      }
+      hasRecognizedTextRef.current = false;
+      // Clear so next tap creates a fresh instance
+      recognitionRef.current = null;
+    };
+
+    recognitionRef.current.onerror = (event: any) => {
+      console.warn('SpeechRecognition error:', event.error);
+      if (event.error === 'not-allowed') setShowMicGuide(false);
+      setIsListening(false);
+      recognitionRef.current = null;
+    };
 
     try {
       recognitionRef.current.start();
     } catch (error) {
-      console.error(error);
+      console.error('SpeechRecognition start failed:', error);
     }
   };
 
@@ -190,11 +199,13 @@ export default function App() {
       return;
     }
 
+    // If we already have permission saved, just start listening
     if (localStorage.getItem('micPermissionGranted') === 'true') {
       startListening();
       return;
     }
 
+    // Try permission query (not supported on iOS Safari, so we catch)
     try {
       if (navigator.permissions && navigator.permissions.query) {
         const permission = await navigator.permissions.query({ name: 'microphone' as PermissionName });
@@ -203,11 +214,11 @@ export default function App() {
           return;
         }
       }
-    } catch {
-      // Ignore
-    }
+    } catch { /* ignore – iOS doesn't support this */ }
 
-    setShowMicGuide(true);
+    // Request mic access via getUserMedia (triggers browser permission dialog)
+    // then immediately start listening – keeps the user gesture chain intact for iOS
+    requestMicAccess();
   };
 
   const handleAddCard = (e: React.FormEvent) => {
