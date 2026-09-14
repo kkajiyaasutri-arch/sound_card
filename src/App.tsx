@@ -114,29 +114,6 @@ export default function App() {
     speakRef.current = speak;
   });
 
-  // Request mic permission and start listening only after user grants access.
-  const requestMicAccess = () => {
-    setShowMicGuide(false);
-
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      // Wait for the user to tap "Allow" before starting recognition.
-      navigator.mediaDevices
-        .getUserMedia({ audio: true })
-        .then((stream) => {
-          // Stop tracks – we only needed to trigger the permission dialog.
-          stream.getTracks().forEach((track) => track.stop());
-          // Now that permission is granted, start recognition.
-          startListening();
-        })
-        .catch((err) => {
-          console.warn('getUserMedia mic request error:', err);
-        });
-    } else {
-      // Fallback for browsers that don't support getUserMedia.
-      startListening();
-    }
-  };
-
   const startListening = () => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -160,7 +137,6 @@ export default function App() {
       setIsListening(true);
       setShowMicGuide(false);
       hasRecognizedTextRef.current = false;
-      localStorage.setItem('micPermissionGranted', 'true');
     };
 
     recognitionRef.current.onresult = (event: any) => {
@@ -180,13 +156,11 @@ export default function App() {
         speakRef.current(directInputTextRef.current);
       }
       hasRecognizedTextRef.current = false;
-      // Clear so next tap creates a fresh instance
       recognitionRef.current = null;
     };
 
     recognitionRef.current.onerror = (event: any) => {
       console.warn('SpeechRecognition error:', event.error);
-      if (event.error === 'not-allowed') setShowMicGuide(false);
       setIsListening(false);
       recognitionRef.current = null;
     };
@@ -198,6 +172,8 @@ export default function App() {
     }
   };
 
+  // Toggle listening: call startListening() directly from the button tap (same gesture chain).
+  // iOS Safari's webkitSpeechRecognition handles the mic permission dialog internally.
   const toggleListening = (e: React.MouseEvent) => {
     e.preventDefault();
     if (isListening) {
@@ -205,13 +181,7 @@ export default function App() {
       setIsListening(false);
       return;
     }
-    // Check if permission was already granted; if so skip getUserMedia dialog.
-    if (localStorage.getItem('micPermissionGranted') === 'true') {
-      startListening();
-      return;
-    }
-    // First tap: request permission via getUserMedia, then start recognition.
-    requestMicAccess();
+    startListening();
   };
 
   const handleAddCard = (e: React.FormEvent) => {
