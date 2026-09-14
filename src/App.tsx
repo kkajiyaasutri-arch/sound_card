@@ -718,7 +718,7 @@ export default function App() {
               <p className="text-xl text-slate-600 mb-8 leading-relaxed">このあと表示されるブラウザの確認画面で、マイクの使用を許可してください。</p>
               <div className="flex gap-4 w-full">
                 <button onClick={() => setShowMicGuide(false)} className="flex-1 py-4 text-lg font-bold text-slate-500 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors">キャンセル</button>
-                <button onClick={requestMicAccess} className="flex-1 py-4 text-lg font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-lg shadow-blue-200">確認して進む</button>
+                <button onClick={startListening} className="flex-1 py-4 text-lg font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-lg shadow-blue-200">確認して進む</button>
               </div>
             </motion.div>
           </motion.div>
