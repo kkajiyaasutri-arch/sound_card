@@ -128,54 +128,56 @@ export default function App() {
     }
 
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    recognitionRef.current = new SpeechRecognition();
-    recognitionRef.current.continuous = !isIOS; // iOS does not support continuous mode
-    recognitionRef.current.interimResults = true;
-    recognitionRef.current.lang = 'ja-JP';
+    const recognition = new SpeechRecognition();
+    recognitionRef.current = recognition;
+    recognition.continuous = !isIOS;
+    recognition.interimResults = true;
+    recognition.lang = 'ja-JP';
 
-    recognitionRef.current.onstart = () => {
+    let capturedTranscript = '';
+
+    recognition.onstart = () => {
       setIsListening(true);
       setShowMicGuide(false);
+      capturedTranscript = '';
       hasRecognizedTextRef.current = false;
     };
 
-    recognitionRef.current.onresult = (event: any) => {
-      let final = '';
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) final += event.results[i][0].transcript;
+    recognition.onresult = (event: any) => {
+      let currentResult = '';
+      for (let i = 0; i < event.results.length; ++i) {
+        currentResult += event.results[i][0].transcript;
       }
-      if (final) {
-        setDirectInputText(prev => prev + final);
+      if (currentResult) {
+        capturedTranscript = currentResult;
+        setDirectInputText(currentResult);
         hasRecognizedTextRef.current = true;
       }
     };
 
-    recognitionRef.current.onend = () => {
+    recognition.onend = () => {
       setIsListening(false);
-      if (hasRecognizedTextRef.current && directInputTextRef.current) {
-        speakRef.current(directInputTextRef.current);
+      if (capturedTranscript.trim()) {
+        speakRef.current(capturedTranscript.trim());
       }
       hasRecognizedTextRef.current = false;
       recognitionRef.current = null;
     };
 
-    recognitionRef.current.onerror = (event: any) => {
+    recognition.onerror = (event: any) => {
       console.warn('SpeechRecognition error:', event.error);
       setIsListening(false);
       recognitionRef.current = null;
     };
 
     try {
-      recognitionRef.current.start();
+      recognition.start();
     } catch (error) {
       console.error('SpeechRecognition start failed:', error);
     }
   };
 
-  // Toggle listening: call startListening() directly from the button tap (same gesture chain).
-  // iOS Safari's webkitSpeechRecognition handles the mic permission dialog internally.
-  const toggleListening = (e: React.MouseEvent) => {
-    e.preventDefault();
+  const toggleListening = () => {
     if (isListening) {
       recognitionRef.current?.stop();
       setIsListening(false);
@@ -368,7 +370,7 @@ export default function App() {
                     <div className="flex gap-1 shrink-0">
                       <button
                         type="button"
-                        onClick={toggleListening}
+                        onClick={() => { console.log('Mic button clicked'); toggleListening(); }}
                         className={`p-2 md:p-3 mb-0.5 md:mb-0 rounded-xl transition-colors shrink-0 flex items-center justify-center ${
                           isListening ? 'bg-red-100 text-red-600 hover:bg-red-200' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
                         }`}
