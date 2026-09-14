@@ -114,24 +114,27 @@ export default function App() {
     speakRef.current = speak;
   });
 
-  // Request mic permission and start listening *immediately* (no async/await) to keep the iOS user‑chain.
+  // Request mic permission and start listening only after user grants access.
   const requestMicAccess = () => {
+    setShowMicGuide(false);
+
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      // Initiate permission request without awaiting; keep within same user gesture.
+      // Wait for the user to tap "Allow" before starting recognition.
       navigator.mediaDevices
         .getUserMedia({ audio: true })
         .then((stream) => {
-          // Stop tracks – we only needed the permission.
+          // Stop tracks – we only needed to trigger the permission dialog.
           stream.getTracks().forEach((track) => track.stop());
+          // Now that permission is granted, start recognition.
+          startListening();
         })
         .catch((err) => {
           console.warn('getUserMedia mic request error:', err);
         });
+    } else {
+      // Fallback for browsers that don't support getUserMedia.
+      startListening();
     }
-    // Mark permission attempt and start listening immediately.
-    // Permission will be handled by SpeechRecognition start().
-    setShowMicGuide(false);
-    startListening();
   };
 
   const startListening = () => {
@@ -198,19 +201,18 @@ export default function App() {
   const toggleListening = (e: React.MouseEvent) => {
     e.preventDefault();
     if (isListening) {
-        recognitionRef.current?.stop();
-        setIsListening(false);
-        return;
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
     }
-
-    // Request mic permission (non‑awaited) then start listening immediately.
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia({ audio: true }).catch(err => {
-            console.warn('getUserMedia error:', err);
-        });
+    // Check if permission was already granted; if so skip getUserMedia dialog.
+    if (localStorage.getItem('micPermissionGranted') === 'true') {
+      startListening();
+      return;
     }
-    startListening();
-};
+    // First tap: request permission via getUserMedia, then start recognition.
+    requestMicAccess();
+  };
 
   const handleAddCard = (e: React.FormEvent) => {
     e.preventDefault();
