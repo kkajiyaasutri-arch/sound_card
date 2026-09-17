@@ -302,7 +302,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-blue-200 pb-32">
-      
+
       {/* Sticky Top Section */}
       <div className="sticky top-0 z-40 bg-slate-50/95 backdrop-blur-sm border-b border-slate-200/50 shadow-[0_10px_20px_-15px_rgba(0,0,0,0.05)] pt-4 md:pt-6 pb-4">
         <div className="max-w-4xl mx-auto px-4 md:px-8 flex flex-col gap-4 md:gap-6">
@@ -498,7 +498,7 @@ export default function App() {
                           speak(card.text, card);
                         }
                       }}
-                      className="w-full relative group bg-white p-4 md:p-6 rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-md hover:-translate-y-1 transition-all active:scale-95 flex flex-col items-center justify-center gap-3 aspect-square"
+                      className="w-full relative group bg-white p-4 md:p-6 rounded-[2rem] shadow-sm border border-slate-100 hover:shadow-md hover:-translate-y-1 active:scale-95 transition-all flex flex-col items-center justify-center gap-3 aspect-square"
                     >
                       <div className="text-5xl md:text-6xl mb-2 group-hover:scale-110 transition-transform">{card.icon}</div>
                       <div className="font-bold text-base md:text-lg text-slate-700 leading-tight">
@@ -508,7 +508,7 @@ export default function App() {
                       {card.id !== "special-datetime" && (
                         <button
                           onClick={(e) => handleDeleteCard(card.id, e)}
-                          className="absolute top-2 right-2 p-2.5 bg-slate-100 text-slate-400 rounded-full opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 transition-all focus:opacity-100"
+                          className="absolute top-2.5 right-2.5 p-2 bg-slate-100 text-slate-400 rounded-full hover:bg-red-50 hover:text-red-500 active:scale-90 transition-all shadow-sm"
                           title="削除"
                         >
                           <Trash2 className="w-4 h-4" />
