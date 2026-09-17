@@ -508,7 +508,7 @@ export default function App() {
                       {card.id !== "special-datetime" && (
                         <button
                           onClick={(e) => handleDeleteCard(card.id, e)}
-                          className="absolute top-2.5 right-2.5 p-2 bg-slate-100 text-slate-400 rounded-full hover:bg-red-50 hover:text-red-500 active:scale-90 transition-all shadow-sm"
+                          className="absolute top-2.5 right-2.5 p-2 bg-slate-100/80 text-slate-400 rounded-full hover:bg-red-50 hover:text-red-500 active:scale-90 transition-all shadow-sm z-10"
                           title="削除"
                         >
                           <Trash2 className="w-4 h-4" />
